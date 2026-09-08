@@ -93,21 +93,28 @@ export function TeacherDashboard({ users }: Props) {
           <h1 className="text-2xl font-bold text-slate-800">Dashboard Guru</h1>
           <p className="text-slate-500">Pantau perkembangan belajar siswa secara real-time.</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors shadow-sm"
-          >
-            <Download size={18} />
-            Export CSV
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <Printer size={18} />
-            Cetak PDF
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors shadow-sm"
+            >
+              <Download size={18} />
+              Export CSV
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+            >
+              <Printer size={18} />
+              Cetak PDF
+            </button>
+          </div>
+          {window.self !== window.top && (
+            <p className="text-xs text-amber-600 font-medium text-right mt-1">
+              *Jika cetak gagal, buka aplikasi di Tab Baru (ikon ↗ di sudut kanan atas)
+            </p>
+          )}
         </div>
       </div>
 

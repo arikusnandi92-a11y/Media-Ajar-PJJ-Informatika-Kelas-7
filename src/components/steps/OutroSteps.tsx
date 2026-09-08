@@ -192,13 +192,20 @@ export function Hasil({ currentUser }: { currentUser: UserData | null }) {
         <p className="text-slate-600 mb-6 max-w-lg mx-auto">
           Hebat! Kamu sudah menyelesaikan pembelajaran hari ini. Terus berlatih karena kemampuan mengolah data akan sangat berguna di sekolah maupun kehidupan sehari-hari.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => window.print()} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
-            Cetak Hasil
-          </button>
-          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-colors">
-            Kembali ke Beranda
-          </button>
+        <div className="flex flex-col gap-2 items-center justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={() => window.print()} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+              Cetak Hasil
+            </button>
+            <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-colors">
+              Kembali ke Beranda
+            </button>
+          </div>
+          {window.self !== window.top && (
+            <p className="text-xs text-amber-600 font-medium max-w-sm mt-2">
+              *Jika tombol cetak gagal, buka aplikasi di Tab Baru (klik ikon ↗ di sudut kanan atas).
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -44,21 +44,41 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
   const [absentNumber, setAbsentNumber] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const startCamera = async () => {
+    setCameraError(null);
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Kamera tidak didukung di browser ini. Silakan gunakan tombol unggah foto di bawah.");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsCameraActive(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error accessing camera", err);
-      alert("Kamera tidak dapat diakses. Pastikan Anda memberikan izin kamera.");
+      setIsCameraActive(false);
+      setCameraError(err.message || "Gagal mengakses kamera. Silakan periksa izin kamera atau gunakan tombol unggah foto alternatif.");
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCameraError(null);
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhoto(event.target?.result as string);
+        stopCamera();
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -100,7 +120,7 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !className || !absentNumber || !photo) {
-      alert("Pastikan semua data terisi dan Anda sudah mengambil foto selfie!");
+      setCameraError("Pastikan semua data terisi dan Anda sudah mengambil foto selfie (atau mengunggah foto)!");
       return;
     }
     
@@ -176,15 +196,28 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
           <div className="pt-2 border-t border-slate-100">
             <label className="block text-sm font-medium text-slate-700 mb-2">Foto Selfie Presensi</label>
             
+            {cameraError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-medium">
+                {cameraError}
+              </div>
+            )}
+
             {!photo && !isCameraActive && (
-              <button 
-                type="button" 
-                onClick={startCamera}
-                className="w-full py-8 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:bg-slate-50 hover:border-emerald-300 flex flex-col items-center justify-center gap-2 transition-colors"
-              >
-                <Camera size={32} className="text-slate-400" />
-                <span className="font-medium">Buka Kamera untuk Selfie</span>
-              </button>
+              <div className="space-y-3">
+                <button 
+                  type="button" 
+                  onClick={startCamera}
+                  className="w-full py-6 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:bg-slate-50 hover:border-emerald-300 flex flex-col items-center justify-center gap-2 transition-colors"
+                >
+                  <Camera size={32} className="text-slate-400" />
+                  <span className="font-medium">Buka Kamera untuk Selfie</span>
+                </button>
+                <div className="text-center text-sm text-slate-500 font-medium">ATAU</div>
+                <label className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-slate-200 cursor-pointer transition-colors">
+                  <span className="font-medium">Pilih dari Galeri / Kamera HP</span>
+                  <input type="file" accept="image/*" capture="user" onChange={handleFileUpload} className="hidden" ref={fileInputRef} />
+                </label>
+              </div>
             )}
 
             {!photo && isCameraActive && (
@@ -208,7 +241,7 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
                   onClick={retakePhoto}
                   className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-slate-900/80 text-white rounded-full text-sm font-medium backdrop-blur-sm"
                 >
-                  Foto Ulang
+                  Ganti Foto
                 </button>
               </div>
             )}
@@ -248,12 +281,14 @@ const diagnosticQuestions = [
 export function Diagnostik({ setStep, currentUser, saveUser }: { setStep: (s: number) => void, currentUser: UserData | null, saveUser: (u: UserData) => void }) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = () => {
     if (Object.keys(answers).length < 5) {
-      alert("Yuk, jawab semua pertanyaan dulu!");
+      setErrorMsg("Yuk, lengkapi semua jawaban dulu sebelum lanjut!");
       return;
     }
+    setErrorMsg(null);
     if (currentUser) {
       saveUser({ ...currentUser, diagnostic: answers, points: currentUser.points + 20 });
     }
@@ -279,7 +314,7 @@ export function Diagnostik({ setStep, currentUser, saveUser }: { setStep: (s: nu
         <p className="text-slate-600">Jawab sejujurnya ya! Tidak ada jawaban yang salah, ini hanya untuk melihat sejauh mana kamu tahu.</p>
       </div>
       
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6 mb-6">
         {diagnosticQuestions.map((q, i) => (
           <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
             <p className="font-medium text-slate-800 mb-4">{i + 1}. {q}</p>
@@ -298,7 +333,13 @@ export function Diagnostik({ setStep, currentUser, saveUser }: { setStep: (s: nu
         ))}
       </div>
       
-      <button onClick={handleSubmit} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-lg">
+      {errorMsg && (
+        <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-center font-medium">
+          {errorMsg}
+        </div>
+      )}
+
+      <button onClick={handleSubmit} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-lg hover:bg-emerald-700 transition-colors">
         Selesai Menjawab
       </button>
     </div>
