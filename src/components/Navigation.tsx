@@ -30,7 +30,7 @@ interface NavigationProps {
 
 export function Navigation({ currentStep, setStep, currentUser }: NavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 pb-safe flex justify-between items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:shadow-none md:border-t-0 md:bg-transparent md:p-0 mt-8">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 pb-8 flex justify-between items-center z-[100] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:shadow-none md:border-t-0 md:bg-transparent md:p-0 md:pb-0 mt-8">
       <button
         onClick={() => setStep(Math.max(0, currentStep - 1))}
         disabled={currentStep === 0}

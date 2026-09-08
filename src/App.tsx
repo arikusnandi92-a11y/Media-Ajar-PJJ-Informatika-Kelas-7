@@ -25,6 +25,7 @@ export default function App() {
     if (currentUser && step > 0) {
       markStepComplete(step);
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
   const renderStep = () => {
@@ -53,7 +54,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-800 pb-20 md:pb-0">
+    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-800 pb-28 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -108,7 +109,7 @@ export default function App() {
       </main>
 
       {/* Navigation (Only in student mode, and not on home page if they haven't started) */}
-      {mode === 'student' && (step > 0 || currentUser) && step < 15 && (
+      {mode === 'student' && (step > 0 || currentUser) && step <= 17 && (
         <Navigation currentStep={step} setStep={setStep} currentUser={currentUser} />
       )}
     </div>
