@@ -39,7 +39,7 @@ export function Kuis({ currentUser, saveUser }: { currentUser: UserData | null, 
     } else {
       setShowResult(true);
       if (currentUser) {
-        saveUser({ ...currentUser, quizScore: score, points: currentUser.points + score });
+        saveUser({ ...currentUser, quizScore: score, points: currentUser.points + score, isQuizFinished: true });
       }
     }
   };

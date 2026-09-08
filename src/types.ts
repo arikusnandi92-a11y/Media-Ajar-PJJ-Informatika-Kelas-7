@@ -13,6 +13,7 @@ export interface UserData {
   progress: number;
   completedSteps: number[];
   photo?: string;
+  isQuizFinished?: boolean;
 }
 
 export type AppMode = 'student' | 'teacher';
