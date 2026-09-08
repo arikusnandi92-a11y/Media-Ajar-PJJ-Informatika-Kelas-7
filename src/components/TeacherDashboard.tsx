@@ -1,3 +1,4 @@
+// The absent number is actually storing ID, so we change the header "No. Absen" to "ID/NISN"
 import { UserData } from '../types';
 import { Download, Search, Users, Star, BookOpen, Printer, UserCircle, LayoutGrid, Calendar, Trash2, Edit2, X, Check } from 'lucide-react';
 import React, { useState } from 'react';
@@ -39,7 +40,7 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
   };
 
   const exportCSV = () => {
-    const headers = ['Nama', 'Kelas', 'No. Absen', 'Waktu Presensi', 'Progress (%)', 'Skor Kuis', 'Poin', 'Refleksi'];
+    const headers = ['Nama', 'Kelas', 'ID Siswa', 'Waktu Presensi', 'Progress (%)', 'Skor Kuis', 'Poin', 'Refleksi'];
     const rows = users.map(u => [
       u.name,
       u.className,
@@ -225,7 +226,7 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
                 <thead className="text-xs text-slate-500 uppercase bg-slate-50 print:bg-white print:border-b-2 print:border-black">
                   <tr>
                     <th className="px-6 py-4 print:py-2 print:px-2">Siswa</th>
-                    <th className="px-6 py-4 print:py-2 print:px-2">Kelas / No</th>
+                    <th className="px-6 py-4 print:py-2 print:px-2">Kelas / ID</th>
                     <th className="px-6 py-4 print:py-2 print:px-2">Waktu</th>
                     <th className="px-6 py-4 print:py-2 print:px-2">Progress</th>
                     <th className="px-6 py-4 print:py-2 print:px-2">Skor Kuis</th>
@@ -403,7 +404,7 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">No. Absen</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">ID Siswa</label>
                   <input 
                     type="text" 
                     value={editingUser.absentNumber} 

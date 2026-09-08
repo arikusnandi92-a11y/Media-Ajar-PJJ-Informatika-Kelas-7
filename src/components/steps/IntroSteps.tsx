@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { UserData } from '../../types';
 import { BookOpen, CheckCircle, ChevronRight, User, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
+import studentsData from '../../students.json';
 
 // Step 0
 export function Home({ setStep }: { setStep: (s: number) => void }) {
@@ -39,9 +40,8 @@ export function Home({ setStep }: { setStep: (s: number) => void }) {
 
 // Step 1
 export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) => void, saveUser: (u: UserData) => void, users?: UserData[] }) {
-  const [name, setName] = useState('');
   const [className, setClassName] = useState('');
-  const [absentNumber, setAbsentNumber] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -52,6 +52,18 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Filter students based on selected class
+  const classStudents = useMemo(() => {
+    if (!className) return [];
+    return studentsData
+      .filter(s => s.class === className)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [className]);
+
+  const selectedStudent = useMemo(() => {
+    return studentsData.find(s => s.id === selectedStudentId);
+  }, [selectedStudentId]);
 
   const startCamera = async () => {
     setCameraError(null);
@@ -152,17 +164,14 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !className || !absentNumber || !photo) {
+    if (!selectedStudent || !className || !photo) {
       setCameraError("Pastikan semua data terisi dan Anda sudah mengambil foto selfie (atau mengunggah foto)!");
       return;
     }
     
     // Check if user already exists (for resuming from different device)
-    const existingUser = users?.find(u => 
-      u.name.toLowerCase() === name.toLowerCase() && 
-      u.className === className && 
-      u.absentNumber === absentNumber
-    );
+    // Now we use the official ID for exact matching
+    const existingUser = users?.find(u => u.absentNumber === selectedStudent.id);
 
     if (existingUser) {
       // Update their latest photo and date, but keep progress
@@ -188,9 +197,9 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
 
     const newUser: UserData = {
       id: Date.now().toString(),
-      name,
-      className,
-      absentNumber,
+      name: selectedStudent.name,
+      className: selectedStudent.class,
+      absentNumber: selectedStudent.id, // Store their NISN/ID as absentNumber
       date: new Date().toISOString(),
       diagnostic: {},
       quizScore: 0,
@@ -218,8 +227,8 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
         </h2>
         <p className="text-lg text-slate-600 mb-8 max-w-md">
           {existingUserFound 
-            ? "Halo kembali! Kami telah menemukan data belajarmu sebelumnya. Mari lanjutkan petualanganmu." 
-            : "Tepuk tangan untuk diri sendiri 👏\n Hari ini kamu sudah hadir dan siap belajar!"}
+            ? `Halo kembali, ${selectedStudent?.name}! Kami telah menemukan data belajarmu sebelumnya. Mari lanjutkan petualanganmu.` 
+            : `Tepuk tangan untuk diri sendiri 👏\n Hari ini ${selectedStudent?.name} sudah hadir dan siap belajar!`}
         </p>
         <button onClick={() => setStep(resumedStep)} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold">
           {existingUserFound ? "Lanjutkan Belajar" : "Lanjut ke Diagnostik"}
@@ -237,28 +246,33 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
-            <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Masukkan nama..." />
+            <label className="block text-sm font-medium text-slate-700 mb-1">Pilih Kelas</label>
+            <select required value={className} onChange={e => {
+              setClassName(e.target.value);
+              setSelectedStudentId(''); // Reset student when class changes
+            }} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="">-- Pilih Kelas --</option>
+              <option value="VII-A">VII-A</option>
+              <option value="VII-B">VII-B</option>
+              <option value="VII-C">VII-C</option>
+              <option value="VII-D">VII-D</option>
+              <option value="VII-E">VII-E</option>
+              <option value="VII-F">VII-F</option>
+              <option value="VII-G">VII-G</option>
+              <option value="VII-H">VII-H</option>
+            </select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Kelas</label>
-              <select required value={className} onChange={e => setClassName(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                <option value="">Pilih...</option>
-                <option value="VII A">VII A</option>
-                <option value="VII B">VII B</option>
-                <option value="VII C">VII C</option>
-                <option value="VII D">VII D</option>
-                <option value="VII E">VII E</option>
-                <option value="VII F">VII F</option>
-                <option value="VII G">VII G</option>
-                <option value="VII H">VII H</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">No. Absen</label>
-              <input type="number" required min="1" max="50" value={absentNumber} onChange={e => setAbsentNumber(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="No..." />
-            </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Pilih Nama</label>
+            <select required value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} disabled={!className} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400">
+              <option value="">-- Pilih Nama Kamu --</option>
+              {classStudents.map(student => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div className="pt-2 border-t border-slate-100">
@@ -326,7 +340,7 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
           
           <button 
             type="submit" 
-            disabled={!photo || !name || !className || !absentNumber}
+            disabled={!photo || !selectedStudent || !className}
             className="w-full py-4 mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg transition-colors"
           >
             KIRIM PRESENSI
