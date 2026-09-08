@@ -16,9 +16,9 @@ import { DragDropGame, TekaTekiSilang, PuzzleRumus } from './components/steps/Ga
 import { Proyek, Refleksi, Hasil } from './components/steps/OutroSteps';
 
   export default function App() {
-    const { users, currentUser, saveUser, deleteUser, markStepComplete } = useStore();
     const [mode, setMode] = useState<AppMode>('student');
-  const [step, setStep] = useState(0);
+    const { users, currentUser, saveUser, deleteUser, markStepComplete, getUserById } = useStore(mode === 'teacher');
+    const [step, setStep] = useState(0);
   
   // Update progress automatically
   useEffect(() => {
@@ -31,7 +31,7 @@ import { Proyek, Refleksi, Hasil } from './components/steps/OutroSteps';
   const renderStep = () => {
     switch(step) {
       case 0: return <Home setStep={setStep} />;
-      case 1: return <Presensi setStep={setStep} saveUser={saveUser} users={users} />;
+      case 1: return <Presensi setStep={setStep} saveUser={saveUser} getUserById={getUserById} />;
       case 2: return <Diagnostik setStep={setStep} currentUser={currentUser} saveUser={saveUser} />;
       case 3: return <Tujuan setStep={setStep} />;
       case 4: return <Apersepsi setStep={setStep} currentUser={currentUser} saveUser={saveUser} />;

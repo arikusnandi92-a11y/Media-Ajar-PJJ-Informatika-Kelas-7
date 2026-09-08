@@ -39,7 +39,7 @@ export function Home({ setStep }: { setStep: (s: number) => void }) {
 }
 
 // Step 1
-export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) => void, saveUser: (u: UserData) => void, users?: UserData[] }) {
+export function Presensi({ setStep, saveUser, getUserById }: { setStep: (s: number) => void, saveUser: (u: UserData) => void, getUserById: (id: string) => Promise<UserData | null> }) {
   const [className, setClassName] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -162,7 +162,7 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !className || !photo) {
       setCameraError("Pastikan semua data terisi dan Anda sudah mengambil foto selfie (atau mengunggah foto)!");
@@ -171,7 +171,7 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
     
     // Check if user already exists (for resuming from different device)
     // Now we use the official ID for exact matching
-    const existingUser = users?.find(u => u.absentNumber === selectedStudent.id);
+    const existingUser = await getUserById(selectedStudent.id);
 
     if (existingUser) {
       // Update their latest photo and date, but keep progress
@@ -196,7 +196,7 @@ export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) =>
     }
 
     const newUser: UserData = {
-      id: Date.now().toString(),
+      id: selectedStudent.id,
       name: selectedStudent.name,
       className: selectedStudent.class,
       absentNumber: selectedStudent.id, // Store their NISN/ID as absentNumber

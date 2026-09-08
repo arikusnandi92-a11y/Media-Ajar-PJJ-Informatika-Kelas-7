@@ -1,7 +1,8 @@
 // The absent number is actually storing ID, so we change the header "No. Absen" to "ID/NISN"
 import { UserData } from '../types';
-import { Download, Search, Users, Star, BookOpen, Printer, UserCircle, LayoutGrid, Calendar, Trash2, Edit2, X, Check } from 'lucide-react';
-import React, { useState } from 'react';
+import { Download, Search, Users, Star, BookOpen, Printer, UserCircle, LayoutGrid, Calendar, Trash2, Edit2, X, Check, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { googleSignIn, getAccessToken, initAuth } from '../lib/auth';
 
 interface Props {
   users: UserData[];
@@ -14,6 +15,15 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
   const [activeTab, setActiveTab] = useState<'semua' | 'kelas' | 'tanggal'>('semua');
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [needsAuth, setNeedsAuth] = useState(false);
+
+  useEffect(() => {
+    initAuth(
+      () => setNeedsAuth(false),
+      () => setNeedsAuth(true)
+    );
+  }, []);
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -63,6 +73,83 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const exportToSheets = async () => {
+    if (users.length === 0) return alert('Belum ada data untuk diekspor.');
+    
+    setIsExporting(true);
+    try {
+      let token = await getAccessToken();
+      if (!token) {
+        const result = await googleSignIn();
+        if (result) {
+          token = result.accessToken;
+          setNeedsAuth(false);
+        } else {
+          setIsExporting(false);
+          return;
+        }
+      }
+
+      // Create a new spreadsheet
+      const createResponse = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          properties: {
+            title: `Rekap BDR Informatika - ${new Date().toLocaleDateString('id-ID')}`
+          }
+        })
+      });
+
+      if (!createResponse.ok) throw new Error('Gagal membuat Spreadsheet');
+      const createData = await createResponse.json();
+      const spreadsheetId = createData.spreadsheetId;
+      const sheetUrl = createData.spreadsheetUrl;
+
+      // Prepare data
+      const headers = ['Nama', 'Kelas', 'ID Siswa', 'Waktu Presensi', 'Progress (%)', 'Skor Kuis', 'Poin', 'Refleksi'];
+      const rows = users.map(u => [
+        u.name,
+        u.className,
+        u.absentNumber,
+        new Date(u.date).toLocaleString('id-ID'),
+        u.progress,
+        u.quizScore,
+        u.points,
+        u.reflection
+      ]);
+      const values = [headers, ...rows];
+
+      // Update spreadsheet values
+      const updateResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:H${values.length}?valueInputOption=USER_ENTERED`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          range: `Sheet1!A1:H${values.length}`,
+          majorDimension: 'ROWS',
+          values: values
+        })
+      });
+
+      if (!updateResponse.ok) throw new Error('Gagal mengisi data ke Spreadsheet');
+
+      alert('Berhasil diekspor ke Google Sheets!');
+      window.open(sheetUrl, '_blank');
+      
+    } catch (err: any) {
+      console.error(err);
+      alert('Terjadi kesalahan saat ekspor ke Google Sheets: ' + err.message);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handlePrint = () => {
@@ -119,6 +206,14 @@ export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
+            <button
+              onClick={exportToSheets}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors shadow-sm font-medium"
+            >
+              <FileSpreadsheet size={18} />
+              {isExporting ? 'Mengekspor...' : 'Google Sheets'}
+            </button>
             <button
               onClick={exportCSV}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors shadow-sm"
