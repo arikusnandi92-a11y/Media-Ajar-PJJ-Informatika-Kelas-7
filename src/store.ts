@@ -1,61 +1,60 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserData } from './types';
-import { db } from './lib/firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 const CURRENT_USER_KEY = 'bdr_current_user_id';
+const USERS_STORAGE_KEY = 'bdr_users_data';
 
 export const useStore = (isTeacherMode: boolean = false) => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
 
-  // Listen to all users ONLY in teacher mode
-  useEffect(() => {
-    if (!isTeacherMode) {
-      setUsers([]);
-      return;
-    }
-    
-    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
-      const fetchedUsers: UserData[] = [];
-      snapshot.forEach((docSnap) => {
-        fetchedUsers.push(docSnap.data() as UserData);
-      });
-      setUsers(fetchedUsers);
-    }, (error) => {
-      console.error("Error listening to users:", error);
-    });
-
-    return () => unsubscribe();
-  }, [isTeacherMode]);
-
-  // Listen to current user if not in teacher mode
-  useEffect(() => {
-    if (isTeacherMode) return;
-    
-    const currentId = localStorage.getItem(CURRENT_USER_KEY);
-    if (!currentId) {
-      setCurrentUser(null);
-      return;
-    }
-
-    const unsubscribe = onSnapshot(doc(db, 'users', currentId), (docSnap) => {
-      if (docSnap.exists()) {
-        setCurrentUser(docSnap.data() as UserData);
-      } else {
-        // User was deleted from backend
-        clearCurrentUser();
+  const loadData = useCallback(() => {
+    try {
+      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+      let parsedUsers: UserData[] = [];
+      if (storedUsers) {
+        parsedUsers = JSON.parse(storedUsers);
       }
-    }, (error) => {
-      console.error("Error listening to current user:", error);
-    });
+      setUsers(parsedUsers);
 
-    return () => unsubscribe();
-  }, [isTeacherMode]);
+      const currentId = localStorage.getItem(CURRENT_USER_KEY);
+      if (currentId) {
+        const user = parsedUsers.find(u => u.id === currentId);
+        if (user) {
+          setCurrentUser(user);
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing users from local storage", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === USERS_STORAGE_KEY || e.key === CURRENT_USER_KEY) {
+        loadData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadData]);
 
   const saveUser = async (user: UserData) => {
     try {
-      await setDoc(doc(db, 'users', user.id), user);
+      setUsers(prevUsers => {
+        const index = prevUsers.findIndex(u => u.id === user.id);
+        const newUsers = [...prevUsers];
+        if (index >= 0) {
+          newUsers[index] = user;
+        } else {
+          newUsers.push(user);
+        }
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
+        return newUsers;
+      });
       if (!isTeacherMode && (!currentUser || currentUser.id === user.id)) {
         setCurrentUser(user);
         localStorage.setItem(CURRENT_USER_KEY, user.id);
@@ -67,9 +66,11 @@ export const useStore = (isTeacherMode: boolean = false) => {
 
   const getUserById = async (id: string): Promise<UserData | null> => {
     try {
-      const docSnap = await getDoc(doc(db, 'users', id));
-      if (docSnap.exists()) {
-        return docSnap.data() as UserData;
+      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+      if (storedUsers) {
+        const parsedUsers: UserData[] = JSON.parse(storedUsers);
+        const user = parsedUsers.find(u => u.id === id);
+        return user || null;
       }
     } catch (error) {
       console.error("Error fetching user by id:", error);
@@ -79,7 +80,11 @@ export const useStore = (isTeacherMode: boolean = false) => {
 
   const deleteUser = async (userId: string) => {
     try {
-      await deleteDoc(doc(db, 'users', userId));
+      setUsers(prevUsers => {
+        const newUsers = prevUsers.filter(u => u.id !== userId);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
+        return newUsers;
+      });
       const currentId = localStorage.getItem(CURRENT_USER_KEY);
       if (currentId === userId) {
         clearCurrentUser();
