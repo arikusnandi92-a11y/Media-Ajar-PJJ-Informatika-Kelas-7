@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UserData } from './types';
 import { db } from './lib/firebase';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 const CURRENT_USER_KEY = 'bdr_current_user_id';
 
@@ -39,6 +39,18 @@ export const useStore = () => {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      const currentId = localStorage.getItem(CURRENT_USER_KEY);
+      if (currentId === userId) {
+        clearCurrentUser();
+      }
+    } catch (error) {
+      console.error("Error deleting user data:", error);
+    }
+  };
+
   const clearCurrentUser = () => {
     setCurrentUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);
@@ -73,6 +85,7 @@ export const useStore = () => {
     users,
     currentUser,
     saveUser,
+    deleteUser,
     clearCurrentUser,
     addPoints,
     unlockBadge,

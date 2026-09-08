@@ -15,9 +15,9 @@ import { Kuis } from './components/steps/Kuis';
 import { DragDropGame, TekaTekiSilang, PuzzleRumus } from './components/steps/GameSteps';
 import { Proyek, Refleksi, Hasil } from './components/steps/OutroSteps';
 
-export default function App() {
-  const { users, currentUser, saveUser, markStepComplete } = useStore();
-  const [mode, setMode] = useState<AppMode>('student');
+  export default function App() {
+    const { users, currentUser, saveUser, deleteUser, markStepComplete } = useStore();
+    const [mode, setMode] = useState<AppMode>('student');
   const [step, setStep] = useState(0);
   
   // Update progress automatically
@@ -98,7 +98,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {mode === 'teacher' ? (
             <motion.div key="teacher" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <TeacherDashboard users={users} />
+              <TeacherDashboard users={users} saveUser={saveUser} deleteUser={deleteUser} />
             </motion.div>
           ) : (
             <motion.div key="student" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4">

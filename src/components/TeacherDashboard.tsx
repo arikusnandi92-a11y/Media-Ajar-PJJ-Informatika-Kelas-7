@@ -1,19 +1,42 @@
 import { UserData } from '../types';
-import { Download, Search, Users, Star, BookOpen, Printer, UserCircle, LayoutGrid, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { Download, Search, Users, Star, BookOpen, Printer, UserCircle, LayoutGrid, Calendar, Trash2, Edit2, X, Check } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface Props {
   users: UserData[];
+  saveUser: (user: UserData) => void;
+  deleteUser: (userId: string) => void;
 }
 
-export function TeacherDashboard({ users }: Props) {
+export function TeacherDashboard({ users, saveUser, deleteUser }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'semua' | 'kelas' | 'tanggal'>('semua');
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.className.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setUserToDelete({ id, name });
+  };
+
+  const confirmDelete = () => {
+    if (userToDelete) {
+      deleteUser(userToDelete.id);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingUser) {
+      saveUser(editingUser);
+      setEditingUser(null);
+    }
+  };
 
   const exportCSV = () => {
     const headers = ['Nama', 'Kelas', 'No. Absen', 'Waktu Presensi', 'Progress (%)', 'Skor Kuis', 'Poin', 'Refleksi'];
@@ -206,12 +229,13 @@ export function TeacherDashboard({ users }: Props) {
                     <th className="px-6 py-4 print:py-2 print:px-2">Waktu</th>
                     <th className="px-6 py-4 print:py-2 print:px-2">Progress</th>
                     <th className="px-6 py-4 print:py-2 print:px-2">Skor Kuis</th>
+                    <th className="px-6 py-4 print:hidden">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                         Belum ada data siswa.
                       </td>
                     </tr>
@@ -240,6 +264,24 @@ export function TeacherDashboard({ users }: Props) {
                           <span className="hidden print:inline">{user.progress}%</span>
                         </td>
                         <td className="px-6 py-4 print:py-2 print:px-2 font-bold text-amber-600 print:text-black">{user.quizScore}</td>
+                        <td className="px-6 py-4 print:hidden">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Data"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(user.id, user.name)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Hapus Data"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -318,7 +360,7 @@ export function TeacherDashboard({ users }: Props) {
         )}
 
       </div>
-      
+
       {/* Tanda Tangan Guru (Hanya tampil saat print) */}
       <div className="hidden print:flex justify-end mt-16 mr-8">
         <div className="text-center">
@@ -327,6 +369,114 @@ export function TeacherDashboard({ users }: Props) {
           <p>NIP. .....................................</p>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-lg text-slate-800">Edit Data Siswa</h3>
+              <button onClick={() => setEditingUser(null)} className="p-1 text-slate-400 hover:bg-slate-200 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={editingUser.name} 
+                  onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                  className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Kelas</label>
+                  <input 
+                    type="text" 
+                    value={editingUser.className} 
+                    onChange={(e) => setEditingUser({...editingUser, className: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">No. Absen</label>
+                  <input 
+                    type="text" 
+                    value={editingUser.absentNumber} 
+                    onChange={(e) => setEditingUser({...editingUser, absentNumber: e.target.value})}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Progress (%)</label>
+                  <input 
+                    type="number" 
+                    value={editingUser.progress} 
+                    min="0" max="100"
+                    onChange={(e) => setEditingUser({...editingUser, progress: parseInt(e.target.value) || 0})}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Skor Kuis</label>
+                  <input 
+                    type="number" 
+                    value={editingUser.quizScore} 
+                    min="0" max="100"
+                    onChange={(e) => setEditingUser({...editingUser, quizScore: parseInt(e.target.value) || 0})}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-100 flex gap-2 justify-end mt-4">
+                <button type="button" onClick={() => setEditingUser(null)} className="px-4 py-2 text-slate-600 bg-slate-100 rounded-lg font-medium hover:bg-slate-200 transition-colors">
+                  Batal
+                </button>
+                <button type="submit" className="px-4 py-2 text-white bg-emerald-600 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-sm">
+                  <Check size={16} /> Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden p-6 text-center">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h3 className="font-bold text-xl text-slate-800 mb-2">Hapus Data?</h3>
+            <p className="text-slate-600 mb-6">
+              Yakin ingin menghapus data siswa <strong>{userToDelete.name}</strong>? Data yang dihapus tidak dapat dikembalikan.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => setUserToDelete(null)} 
+                className="px-5 py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-colors w-full"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                className="px-5 py-2.5 text-white bg-red-600 hover:bg-red-700 rounded-xl font-medium transition-colors w-full shadow-sm"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
