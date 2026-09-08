@@ -38,7 +38,7 @@ export function Home({ setStep }: { setStep: (s: number) => void }) {
 }
 
 // Step 1
-export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, saveUser: (u: UserData) => void }) {
+export function Presensi({ setStep, saveUser, users }: { setStep: (s: number) => void, saveUser: (u: UserData) => void, users?: UserData[] }) {
   const [name, setName] = useState('');
   const [className, setClassName] = useState('');
   const [absentNumber, setAbsentNumber] = useState('');
@@ -46,6 +46,8 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [existingUserFound, setExistingUserFound] = useState(false);
+  const [resumedStep, setResumedStep] = useState(2);
 
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -75,8 +77,39 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setPhoto(event.target?.result as string);
-        stopCamera();
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_WIDTH = 480;
+          const MAX_HEIGHT = 640;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            setPhoto(dataUrl);
+            stopCamera();
+          }
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -124,6 +157,35 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
       return;
     }
     
+    // Check if user already exists (for resuming from different device)
+    const existingUser = users?.find(u => 
+      u.name.toLowerCase() === name.toLowerCase() && 
+      u.className === className && 
+      u.absentNumber === absentNumber
+    );
+
+    if (existingUser) {
+      // Update their latest photo and date, but keep progress
+      const updatedUser = {
+        ...existingUser,
+        photo,
+        date: new Date().toISOString()
+      };
+      saveUser(updatedUser);
+      setExistingUserFound(true);
+      
+      // Determine which step to resume from
+      const maxCompletedStep = existingUser.completedSteps.length > 0 
+        ? Math.max(...existingUser.completedSteps) 
+        : 1;
+      
+      // Resume from the next step after their max completed
+      const nextStep = Math.min(18, maxCompletedStep + 1);
+      setResumedStep(nextStep);
+      setSubmitted(true);
+      return;
+    }
+
     const newUser: UserData = {
       id: Date.now().toString(),
       name,
@@ -151,11 +213,17 @@ export function Presensi({ setStep, saveUser }: { setStep: (s: number) => void, 
         <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
           <CheckCircle size={40} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">Presensi Berhasil!</h2>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4">
+          {existingUserFound ? "Sesi Dilanjutkan!" : "Presensi Berhasil!"}
+        </h2>
         <p className="text-lg text-slate-600 mb-8 max-w-md">
-          Tepuk tangan untuk diri sendiri 👏<br/> Hari ini kamu sudah hadir dan siap belajar!
+          {existingUserFound 
+            ? "Halo kembali! Kami telah menemukan data belajarmu sebelumnya. Mari lanjutkan petualanganmu." 
+            : "Tepuk tangan untuk diri sendiri 👏\n Hari ini kamu sudah hadir dan siap belajar!"}
         </p>
-        <button onClick={() => setStep(2)} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold">Lanjut ke Diagnostik</button>
+        <button onClick={() => setStep(resumedStep)} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold">
+          {existingUserFound ? "Lanjutkan Belajar" : "Lanjut ke Diagnostik"}
+        </button>
       </motion.div>
     );
   }

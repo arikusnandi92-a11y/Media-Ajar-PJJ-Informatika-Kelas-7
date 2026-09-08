@@ -31,7 +31,7 @@ export default function App() {
   const renderStep = () => {
     switch(step) {
       case 0: return <Home setStep={setStep} />;
-      case 1: return <Presensi setStep={setStep} saveUser={saveUser} />;
+      case 1: return <Presensi setStep={setStep} saveUser={saveUser} users={users} />;
       case 2: return <Diagnostik setStep={setStep} currentUser={currentUser} saveUser={saveUser} />;
       case 3: return <Tujuan setStep={setStep} />;
       case 4: return <Apersepsi setStep={setStep} currentUser={currentUser} saveUser={saveUser} />;
