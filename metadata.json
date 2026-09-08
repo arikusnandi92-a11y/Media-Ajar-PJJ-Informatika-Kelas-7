@@ -1,0 +1,8 @@
+{
+  "name": "Media Ajar Informatika Kelas VII",
+  "description": "Media Pembelajaran Interaktif Belajar Dari Rumah (BDR) - Spreadsheet",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

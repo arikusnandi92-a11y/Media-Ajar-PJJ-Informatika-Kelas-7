@@ -1,0 +1,29 @@
+{
+  "project_id": "gen-lang-client-0644491808",
+  "collections": [
+    {
+      "name": "users",
+      "description": "Stores student data for the BDR Informatics app.",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "name", "type": "string" },
+        { "name": "className", "type": "string" },
+        { "name": "absentNumber", "type": "string" },
+        { "name": "date", "type": "string" },
+        { "name": "diagnostic", "type": "map" },
+        { "name": "quizScore", "type": "number" },
+        { "name": "projectStatus", "type": "boolean" },
+        { "name": "reflection", "type": "string" },
+        { "name": "points", "type": "number" },
+        { "name": "badges", "type": "list" },
+        { "name": "progress", "type": "number" },
+        { "name": "completedSteps", "type": "list" }
+      ],
+      "rules": [
+        { "action": "read", "condition": "true", "description": "Anyone can read" },
+        { "action": "create", "condition": "true", "description": "Anyone can create" },
+        { "action": "update", "condition": "true", "description": "Anyone can update" }
+      ]
+    }
+  ]
+}
