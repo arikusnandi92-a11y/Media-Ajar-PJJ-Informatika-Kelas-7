@@ -493,11 +493,10 @@ export function Apersepsi({ setStep, currentUser, saveUser }: { setStep: (s: num
             ].map(opt => (
               <button
                 key={opt.id}
-                disabled={answered}
                 onClick={() => handleAnswer(opt.id)}
-                className={`p-4 rounded-xl border-2 text-left font-medium flex items-center gap-3 transition-all ${
+                className={`p-4 rounded-xl border-2 text-left font-medium flex items-center gap-3 transition-all cursor-pointer ${
                   selected === opt.id 
-                    ? opt.id === 'B' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-red-500 bg-red-50 text-red-700'
+                    ? opt.id === 'B' ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm' : 'border-red-500 bg-red-50 text-red-700 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-emerald-300'
                 } ${answered && opt.id !== selected && opt.id !== 'B' ? 'opacity-50' : ''} ${answered && opt.id === 'B' && selected !== 'B' ? 'border-emerald-500 bg-emerald-50' : ''}`}
               >
@@ -513,7 +512,7 @@ export function Apersepsi({ setStep, currentUser, saveUser }: { setStep: (s: num
             {selected === 'B' ? (
               <p className="font-medium">✅ Tepat sekali! Spreadsheet dirancang khusus untuk menyimpan dan mengolah data seperti uang kas dengan sangat cepat.</p>
             ) : (
-              <p className="font-medium">💡 Kurang tepat. Jawaban yang benar adalah Spreadsheet (B). Aplikasi ini jagonya berhitung dan mengelola data tabel.</p>
+              <p className="font-medium">💡 Kurang tepat. Coba pilih lagi! Aplikasi ini jagonya berhitung dan mengelola data tabel.</p>
             )}
           </motion.div>
         )}

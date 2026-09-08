@@ -36,8 +36,10 @@ export function Navigation({ currentStep, setStep, currentUser }: NavigationProp
     setShowNotice(false);
   }, [currentStep]);
 
+  const isQuizUnfinished = currentStep === 15 && currentUser && !currentUser.isQuizFinished;
+
   const handleNext = () => {
-    if (currentStep === 15 && (!currentUser || !currentUser.isQuizFinished)) {
+    if (isQuizUnfinished) {
       setShowNotice(true);
       setTimeout(() => setShowNotice(false), 3000);
       return;
@@ -48,8 +50,8 @@ export function Navigation({ currentStep, setStep, currentUser }: NavigationProp
   return (
     <>
       {showNotice && (
-        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-amber-100 text-amber-800 px-6 py-3 rounded-2xl shadow-lg border border-amber-200 z-[110] font-medium text-sm w-[90%] max-w-sm text-center">
-          Mohon selesaikan dan lihat hasil kuis terlebih dahulu sebelum melanjutkan!
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-amber-100 text-amber-800 px-6 py-4 rounded-2xl shadow-2xl border-2 border-amber-300 z-[110] font-bold text-center w-[90%] max-w-sm animate-bounce">
+          ⚠️ Mohon selesaikan dan lihat hasil kuis terlebih dahulu sebelum melanjutkan!
         </div>
       )}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 pb-8 flex justify-between items-center z-[100] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:relative md:bottom-auto md:shadow-none md:border-t-0 md:bg-transparent md:p-0 md:pb-0 mt-8">
@@ -68,9 +70,13 @@ export function Navigation({ currentStep, setStep, currentUser }: NavigationProp
         <button
           onClick={handleNext}
           disabled={currentStep === 18 || (!currentUser && currentStep > 0)}
-          className="px-6 py-3 rounded-xl font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+          className={`px-6 py-3 rounded-xl font-medium text-white transition-colors shadow-sm ${
+            isQuizUnfinished 
+              ? 'bg-slate-400 hover:bg-slate-500' 
+              : 'bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed'
+          }`}
         >
-          Lanjut
+          {isQuizUnfinished ? '🔒 Terkunci' : 'Lanjut'}
         </button>
       </nav>
     </>

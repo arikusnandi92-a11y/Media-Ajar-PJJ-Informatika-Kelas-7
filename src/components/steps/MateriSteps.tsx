@@ -5,6 +5,8 @@ import { motion } from 'motion/react';
 
 // Step 5
 export function Materi1() {
+  const [clickedApp, setClickedApp] = useState<string | null>(null);
+
   return (
     <div className="max-w-3xl mx-auto mt-8 space-y-6">
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -16,20 +18,23 @@ export function Materi1() {
         
         <h3 className="text-lg font-bold text-slate-700 mb-4 mt-8">Contoh Aplikasi Spreadsheet yang Populer:</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-center">
+          <button onClick={() => setClickedApp('Excel')} className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-center hover:bg-emerald-100 transition-colors focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             <div className="w-16 h-16 bg-white rounded-xl mx-auto mb-3 flex items-center justify-center shadow-sm text-emerald-600 font-bold text-xl">X</div>
             <p className="font-medium text-emerald-800">Microsoft Excel</p>
-          </div>
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center">
+            {clickedApp === 'Excel' && <p className="text-xs text-emerald-600 mt-2">Paling populer di perkantoran!</p>}
+          </button>
+          <button onClick={() => setClickedApp('Sheets')} className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center hover:bg-blue-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
             <div className="w-16 h-16 bg-white rounded-xl mx-auto mb-3 flex items-center justify-center shadow-sm text-blue-600 font-bold text-xl">
               <Table size={32} />
             </div>
             <p className="font-medium text-blue-800">Google Sheets</p>
-          </div>
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-center">
+            {clickedApp === 'Sheets' && <p className="text-xs text-blue-600 mt-2">Bisa dikerjakan bersama secara online!</p>}
+          </button>
+          <button onClick={() => setClickedApp('Calc')} className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-center hover:bg-amber-100 transition-colors focus:ring-2 focus:ring-amber-500 focus:outline-none">
             <div className="w-16 h-16 bg-white rounded-xl mx-auto mb-3 flex items-center justify-center shadow-sm text-amber-600 font-bold text-xl">L</div>
             <p className="font-medium text-amber-800">LibreOffice Calc</p>
-          </div>
+            {clickedApp === 'Calc' && <p className="text-xs text-amber-600 mt-2">Gratis dan open source!</p>}
+          </button>
         </div>
       </div>
     </div>
